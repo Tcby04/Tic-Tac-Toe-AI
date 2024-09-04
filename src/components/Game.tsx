@@ -29,17 +29,20 @@ const Game: React.FC = () => {
       draws: 0
     };
   });
+  const [humanStarts, setHumanStarts] = useState<boolean>(true);
 
   useEffect(() => {
     localStorage.setItem('gameStats', JSON.stringify(gameStats));
   }, [gameStats]);
 
   useEffect(() => {
-    if (!isXNext && !checkWinner(board) && board.some(cell => cell === null)) {
-      const aiMove = getAIMove(board);
-      handleMove(aiMove);
+    if ((!humanStarts && isXNext) || (humanStarts && !isXNext)) {
+      if (!checkWinner(board) && board.some(cell => cell === null)) {
+        const aiMove = getAIMove(board);
+        setTimeout(() => handleMove(aiMove), 500); // Add a small delay for better UX
+      }
     }
-  }, [isXNext, board]);
+  }, [humanStarts, isXNext, board]);
 
   const handleMove = (index: number) => {
     if (checkWinner(board) || board[index]) return;
@@ -56,7 +59,7 @@ const Game: React.FC = () => {
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
-    setIsXNext(true);
+    setIsXNext(humanStarts);
     
     const winner = checkWinner(board);
     if (winner || board.every(cell => cell !== null)) {
@@ -68,6 +71,11 @@ const Game: React.FC = () => {
         draws: prevStats.draws + (!winner && board.every(cell => cell !== null) ? 1 : 0)
       }));
     }
+  };
+
+  const toggleStartingPlayer = () => {
+    setHumanStarts(!humanStarts);
+    resetGame();
   };
 
   const calculateWinProbability = (player: string) => {
@@ -136,6 +144,9 @@ const Game: React.FC = () => {
       {winner && <p>{winner === 'X' ? 'You win!' : 'AI wins!'}</p>}
       {!winner && board.every(cell => cell) && <p>It's a draw!</p>}
       <button onClick={resetGame}>Reset Game</button>
+      <button onClick={toggleStartingPlayer}>
+        {humanStarts ? "Let AI Start" : "Let Human Start"}
+      </button>
       <div className="stats">
         <h2>Live Probabilities</h2>
         <p>Player Winning: {stats.player.toFixed(1)}%</p>
