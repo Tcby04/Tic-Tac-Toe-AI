@@ -51,21 +51,50 @@ function minimax(board: (string | null)[], depth: number, isMaximizing: boolean)
   }
 }
 
-export function getAIMove(board: (string | null)[]): number {
-  let bestScore = -Infinity;
-  let bestMove = 0;
-
+export const getAIMove = (board: (string | null)[], aiSymbol: 'X' | 'O'): number => {
+  const humanSymbol = aiSymbol === 'X' ? 'O' : 'X';
+  
+  // Check for winning move
   for (let i = 0; i < 9; i++) {
-    if (!board[i]) {
-      board[i] = 'O';
-      const score = minimax(board, 0, false);
-      board[i] = null;
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = i;
+    if (board[i] === null) {
+      const newBoard = [...board];
+      newBoard[i] = aiSymbol;
+      if (checkWinner(newBoard) === aiSymbol) {
+        return i;
       }
     }
   }
 
-  return bestMove;
-}
+  // Check for blocking move
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === null) {
+      const newBoard = [...board];
+      newBoard[i] = humanSymbol;
+      if (checkWinner(newBoard) === humanSymbol) {
+        return i;
+      }
+    }
+  }
+
+  // Play center if available
+  if (board[4] === null) {
+    return 4;
+  }
+
+  // Play corners
+  const corners = [0, 2, 6, 8];
+  const availableCorners = corners.filter(i => board[i] === null);
+  if (availableCorners.length > 0) {
+    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+  }
+
+  // Play any available side
+  const sides = [1, 3, 5, 7];
+  const availableSides = sides.filter(i => board[i] === null);
+  if (availableSides.length > 0) {
+    return availableSides[Math.floor(Math.random() * availableSides.length)];
+  }
+
+  // If we reach here, there are no moves available (shouldn't happen in a normal game)
+  return -1; // or throw an error
+};

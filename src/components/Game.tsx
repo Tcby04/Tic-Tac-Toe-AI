@@ -30,6 +30,7 @@ const Game: React.FC = () => {
     };
   });
   const [humanStarts, setHumanStarts] = useState<boolean>(true);
+  const [aiSymbol, setAiSymbol] = useState<'X' | 'O'>('O');
 
   useEffect(() => {
     localStorage.setItem('gameStats', JSON.stringify(gameStats));
@@ -38,11 +39,12 @@ const Game: React.FC = () => {
   useEffect(() => {
     if ((!humanStarts && isXNext) || (humanStarts && !isXNext)) {
       if (!checkWinner(board) && board.some(cell => cell === null)) {
-        const aiMove = getAIMove(board);
-        setTimeout(() => handleMove(aiMove), 500); // Add a small delay for better UX
+        const aiMove = getAIMove(board, aiSymbol);
+        const timer = setTimeout(() => handleMove(aiMove), 500);
+        return () => clearTimeout(timer);
       }
     }
-  }, [humanStarts, isXNext, board]);
+  }, [humanStarts, isXNext, board, aiSymbol]);
 
   const handleMove = (index: number) => {
     if (checkWinner(board) || board[index]) return;
@@ -52,30 +54,49 @@ const Game: React.FC = () => {
     setBoard(newBoard);
     setIsXNext(!isXNext);
 
-    if (checkWinner(newBoard) || newBoard.every(cell => cell !== null)) {
-      setGameCount(prev => prev + 1);
+    const winner = checkWinner(newBoard);
+    if (winner || newBoard.every(cell => cell !== null)) {
+      updateGameStats(winner);
     }
+  };
+
+  const updateGameStats = (winner: string | null) => {
+    setGameStats(prevStats => ({
+      ...prevStats,
+      gamesPlayed: prevStats.gamesPlayed + 1,
+      playerWins: prevStats.playerWins + (winner && winner !== aiSymbol ? 1 : 0),
+      aiWins: prevStats.aiWins + (winner === aiSymbol ? 1 : 0),
+      draws: prevStats.draws + (!winner ? 1 : 0)
+    }));
   };
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
-    setIsXNext(humanStarts);
-    
-    const winner = checkWinner(board);
-    if (winner || board.every(cell => cell !== null)) {
-      setGameStats(prevStats => ({
-        ...prevStats,
-        gamesPlayed: prevStats.gamesPlayed + 1,
-        playerWins: prevStats.playerWins + (winner === 'X' ? 1 : 0),
-        aiWins: prevStats.aiWins + (winner === 'O' ? 1 : 0),
-        draws: prevStats.draws + (!winner && board.every(cell => cell !== null) ? 1 : 0)
-      }));
+    setIsXNext(true);
+    setAiSymbol(humanStarts ? 'O' : 'X');
+
+    if (!humanStarts) {
+      setTimeout(() => {
+        const aiMove = getAIMove(Array(9).fill(null), 'X');
+        handleMove(aiMove);
+      }, 500);
     }
   };
 
   const toggleStartingPlayer = () => {
-    setHumanStarts(!humanStarts);
-    resetGame();
+    const newHumanStarts = !humanStarts;
+    setHumanStarts(newHumanStarts);
+    setBoard(Array(9).fill(null));
+    setIsXNext(true);
+    const newAiSymbol = newHumanStarts ? 'O' : 'X';
+    setAiSymbol(newAiSymbol);
+
+    if (!newHumanStarts) {
+      setTimeout(() => {
+        const aiMove = getAIMove(Array(9).fill(null), newAiSymbol);
+        handleMove(aiMove);
+      }, 500);
+    }
   };
 
   const calculateWinProbability = (player: string) => {
@@ -141,7 +162,7 @@ const Game: React.FC = () => {
         <InfoTooltip />
       </h1>
       <Board board={board} onMove={handleMove} />
-      {winner && <p>{winner === 'X' ? 'You win!' : 'AI wins!'}</p>}
+      {winner && <p>{winner === aiSymbol ? 'AI wins!' : 'You win!'}</p>}
       {!winner && board.every(cell => cell) && <p>It's a draw!</p>}
       <button onClick={resetGame}>Reset Game</button>
       <button onClick={toggleStartingPlayer}>
