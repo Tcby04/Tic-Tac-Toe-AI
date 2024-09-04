@@ -3,6 +3,13 @@ import Board from './Board';
 import InfoTooltip from './InfoTooltip';
 import { checkWinner, getAIMove } from '../utils/gameLogic';
 
+interface GameStats {
+  gamesPlayed: number;
+  playerWins: number;
+  aiWins: number;
+  draws: number;
+}
+
 const WINNING_COMBINATIONS = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
   [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
@@ -13,6 +20,19 @@ const Game: React.FC = () => {
   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState<boolean>(true);
   const [gameCount, setGameCount] = useState<number>(0);
+  const [gameStats, setGameStats] = useState<GameStats>(() => {
+    const savedStats = localStorage.getItem('gameStats');
+    return savedStats ? JSON.parse(savedStats) : {
+      gamesPlayed: 0,
+      playerWins: 0,
+      aiWins: 0,
+      draws: 0
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gameStats', JSON.stringify(gameStats));
+  }, [gameStats]);
 
   useEffect(() => {
     if (!isXNext && !checkWinner(board) && board.some(cell => cell === null)) {
@@ -37,6 +57,17 @@ const Game: React.FC = () => {
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
+    
+    const winner = checkWinner(board);
+    if (winner || board.every(cell => cell !== null)) {
+      setGameStats(prevStats => ({
+        ...prevStats,
+        gamesPlayed: prevStats.gamesPlayed + 1,
+        playerWins: prevStats.playerWins + (winner === 'X' ? 1 : 0),
+        aiWins: prevStats.aiWins + (winner === 'O' ? 1 : 0),
+        draws: prevStats.draws + (!winner && board.every(cell => cell !== null) ? 1 : 0)
+      }));
+    }
   };
 
   const calculateWinProbability = (player: string) => {
@@ -110,7 +141,11 @@ const Game: React.FC = () => {
         <p>Player Winning: {stats.player.toFixed(1)}%</p>
         <p>AI Winning: {stats.ai.toFixed(1)}%</p>
         <p>Draw: {stats.draw.toFixed(1)}%</p>
-        <p>Games Played: {gameCount}</p>
+        <h2>Game Statistics</h2>
+        <p>Games Played: {gameStats.gamesPlayed}</p>
+        <p>Player Wins: {gameStats.playerWins}</p>
+        <p>AI Wins: {gameStats.aiWins}</p>
+        <p>Draws: {gameStats.draws}</p>
       </div>
     </div>
   );
