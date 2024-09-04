@@ -1,13 +1,17 @@
 import React from 'react';
 import Game from './components/Game';
+import WaveBackground from './components/WaveBackground';
 
 function App() {
   return (
-    <div className="app-container">
-      <div className="align-center">
-        <Game />
+    <>
+      <WaveBackground />
+      <div className="app-container">
+        <div className="align-center">
+          <Game />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
