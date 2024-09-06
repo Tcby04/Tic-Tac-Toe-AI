@@ -156,18 +156,22 @@ const Game: React.FC = () => {
   const winner = checkWinner(board);
 
   return (
-    <div>
-      <h1>
+    <div className="game-container">
+      <h1 className="game-title">
         Tic Tac Toe: AI vs Human
         <InfoTooltip />
       </h1>
       <Board board={board} onMove={handleMove} />
-      {winner && <p>{winner === aiSymbol ? 'AI wins!' : 'You win!'}</p>}
-      {!winner && board.every(cell => cell) && <p>It's a draw!</p>}
-      <button onClick={resetGame}>Reset Game</button>
-      <button onClick={toggleStartingPlayer}>
-        {humanStarts ? "Let AI Start" : "Let Human Start"}
-      </button>
+      <div className="game-status">
+        {winner && <p>{winner === aiSymbol ? 'AI wins!' : 'You win!'}</p>}
+        {!winner && board.every(cell => cell) && <p>It's a draw!</p>}
+      </div>
+      <div className="game-controls">
+        <button onClick={resetGame}>Reset Game</button>
+        <button onClick={toggleStartingPlayer}>
+          {humanStarts ? "Let AI Start" : "Let Human Start"}
+        </button>
+      </div>
       <div className="stats">
         <h2>Live Probabilities</h2>
         <p>Player Winning: {stats.player.toFixed(1)}%</p>
